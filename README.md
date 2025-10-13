@@ -55,19 +55,3 @@ Trabalho Facul/
 │   └── ESGMonitoring.Tests/
 └── .github/workflows/ci-cd.yml
 ```
-
-## Checklist de Entrega
-
-| Item | OK |
-|---|---|
-| Projeto compactado em .ZIP com estrutura organizada | ☐ |
-| Dockerfile funcional | ☐ |
-| docker-compose.yml ou arquivos Kubernetes | ☐ |
-| Pipeline com etapas de build, teste e deploy | ☐ |
-| README.md com instruções e prints | ☐ |
-| Documentação técnica com evidências (PDF ou PPT) | ☐ |
-| Deploy realizado nos ambientes staging e produção | ☐ |
-
----
-
-> Observação: Os testes incluídos são de _smoke_ (mínimo viável). Recomenda‑se ampliar a cobertura com testes de controllers/serviços específicos.
