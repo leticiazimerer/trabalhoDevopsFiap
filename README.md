@@ -1,57 +1,48 @@
 # Projeto - Cidades ESGInteligentes
 
-API .NET 8 para monitoramento ESG (relatórios de sustentabilidade, fornecedores, pegada de carbono e alertas de conformidade). Esta entrega integra práticas de DevOps com CI/CD, containerização e orquestração.
-
 ## Como executar localmente com Docker
 
-Pré‑requisitos: Docker e Docker Compose instalados.
+Descreva os passos para subir a aplicação localmente.
 
-```bash
-# clonar o repositório
-# cp ".env.example" ".env"  # opcional
-docker compose up -d --build
-# a API ficará disponível em http://localhost:8080/swagger
-```
+1. Clone o repositório.
+2. Navegue até a pasta raiz do projeto.
+3. Execute o comando: `docker-compose up --build`
+4. Acesse `http://localhost:3000` no seu navegador.
+
+---
 
 ## Pipeline CI/CD
 
-**Ferramenta**: GitHub Actions  
-**Etapas**:
-1. **Build & Test**: restaura dependências, compila a solução e executa testes xUnit.
-2. **Image**: build da imagem Docker e push no GHCR (ghcr.io).
-3. **Deploy Staging**: SSH em VM de staging e sobe `docker compose` com imagem da revisão.
-4. **Deploy Produção**: (manual via `workflow_dispatch`) faz o mesmo procedimento apontando para produção.
+A pipeline de integração e entrega contínua (CI/CD) foi implementada utilizando **GitHub Actions**.
 
-**Secrets necessários**: `SSH_HOST_STAGING`, `SSH_HOST_PROD`, `SSH_USER`, `SSH_KEY` (chave privada), além do `GITHUB_TOKEN` padrão para o GHCR.
+O fluxo é disparado a cada `push` na branch `main` e consiste nas seguintes etapas:
+- **build-and-test**: Constrói a imagem Docker da aplicação, faz o login no Docker Hub e envia a imagem para o registro.
+- **deploy-staging**: Simula o deploy no ambiente de Staging.
+- **deploy-production**: Simula o deploy no ambiente de Produção após o sucesso em Staging.
+
+---
 
 ## Containerização
 
-**Dockerfile (multi-stage)**: compila, testa e publica a API, depois executa em runtime `aspnet:8.0`. Porta exposta: **8080**.  
-**Compose**: orquestra **api** + **PostgreSQL** com rede e volume persistente. A conexão padrão usa `Host=db;Port=5432;Database=esgdb;Username=esg;Password=esgpass`.
+A aplicação é containerizada utilizando Docker. Abaixo está o conteúdo do `Dockerfile`:
 
-## Prints do funcionamento
+```dockerfile# 1. Escolha uma imagem base oficial do Node.js
+FROM node:22-slim
 
-Inclua aqui suas evidências locais e de deploy (staging e produção). Exemplos:
-- `docker compose ps`
-- `docker logs <container>`
-- Screenshot do Swagger local e dos ambientes (URLs de staging/produção).
+# 2. Defina o diretório de trabalho dentro do container
+WORKDIR /app
 
-## Tecnologias utilizadas
+# 3. Copie os arquivos de dependência primeiro (para aproveitar o cache do Docker)
+COPY src/package.json ./
 
-- .NET 8 (ASP.NET Core Web API), xUnit
-- Docker, Docker Compose
-- GitHub Actions (CI/CD)
-- PostgreSQL 16 (base de orquestração)
+# 4. Instale as dependências da aplicação
+RUN npm install
 
-## Estrutura do projeto (mínima)
+# 5. Copie o restante do código-fonte da aplicação
+COPY src/ .
 
-```
-Trabalho Facul/
-├── Dockerfile
-├── docker-compose.yml
-├── .env.example
-├── src/
-│   ├── ESGMonitoring.API/
-│   └── ESGMonitoring.Tests/
-└── .github/workflows/ci-cd.yml
-```
+# 6. Exponha a porta que a aplicação usa dentro do container
+EXPOSE 3000
+
+# 7. Defina o comando para iniciar a aplicação quando o container for executado
+CMD ["npm", "start"]

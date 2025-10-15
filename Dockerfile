@@ -1,27 +1,20 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+# 1. Escolha uma imagem base oficial do Node.js
+FROM node:22-slim
 
-COPY src/ESGMonitoring.API/ESGMonitoring.API.csproj src/ESGMonitoring.API/
-COPY src/ESGMonitoring.Tests/ESGMonitoring.Tests.csproj src/ESGMonitoring.Tests/
-
-RUN dotnet restore src/ESGMonitoring.API/ESGMonitoring.API.csproj
-
-COPY src/ESGMonitoring.API/ src/ESGMonitoring.API/
-COPY src/ESGMonitoring.Tests/ src/ESGMonitoring.Tests/
-
-# Build and test
-RUN dotnet build src/ESGMonitoring.API/ESGMonitoring.API.csproj -c Release -o /app/build
-RUN dotnet test src/ESGMonitoring.Tests/ESGMonitoring.Tests.csproj -c Release --no-build --logger "trx;LogFileName=test_results.trx"
-
-# Publish stage
-FROM build AS publish
-RUN dotnet publish src/ESGMonitoring.API/ESGMonitoring.API.csproj -c Release -o /app/publish /p:UseAppHost=false
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# 2. Defina o diretório de trabalho dentro do container
 WORKDIR /app
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ESGMonitoring.API.dll"]
+
+# 3. Copie os arquivos de dependência primeiro (para aproveitar o cache do Docker)
+COPY src/package.json ./
+
+# 4. Instale as dependências da aplicação
+RUN npm install
+
+# 5. Copie o restante do código-fonte da aplicação
+COPY src/ .
+
+# 6. Exponha a porta que a aplicação usa dentro do container
+EXPOSE 3000
+
+# 7. Defina o comando para iniciar a aplicação quando o container for executado
+CMD ["npm", "start"]
